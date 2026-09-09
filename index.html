@@ -2,86 +2,119 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Radar de Milhas e Promoções</title>
-    <!-- Tailwind CSS para um design limpo e moderno -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Radar de Milhas</title>
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
+    
+    <!-- Phosphor Icons para ícones modernos -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <!-- Fonte Inter (Padrão de apps modernos) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8' }
+                    }
+                }
+            }
+        }
+    </script>
 
-    <!-- Header -->
-    <header class="bg-blue-600 text-white shadow-md">
-        <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-            <h1 class="text-xl font-bold tracking-wide">✈️ Radar de Milhas</h1>
-            <button onclick="carregarDados()" id="btn-atualizar" class="text-xs bg-blue-700 hover:bg-blue-800 px-3 py-1.5 rounded-lg transition font-medium">Atualizar</button>
+    <style>
+        /* Oculta scrollbar horizontal mantendo o scroll */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Previne o bounce effect no iOS */
+        body { overscroll-behavior-y: none; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 antialiased min-h-screen flex flex-col">
+
+    <!-- Header / App Bar (Sticky + Blur) -->
+    <header class="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-200">
+        <div class="max-w-md mx-auto px-5 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <i class="ph-fill ph-airplane-tilt text-brand-600 text-2xl"></i>
+                <h1 class="text-lg font-bold tracking-tight text-gray-900">Radar de Milhas</h1>
+            </div>
+            <button onclick="carregarDados()" id="btn-atualizar" class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition active:scale-95">
+                <i class="ph ph-arrows-clockwise text-lg" id="icone-atualizar"></i>
+            </button>
         </div>
     </header>
 
-    <!-- Navegação de Abas -->
-    <nav class="max-w-4xl w-full mx-auto px-4 mt-4 flex gap-2 border-b border-slate-200 pb-2">
-        <button onclick="mudarAba('promocoes')" id="tab-promocoes" class="px-4 py-2 font-semibold text-sm rounded-lg bg-blue-600 text-white transition shadow-sm">Radar de Promoções</button>
-        <button onclick="mudarAba('datas')" id="tab-datas" class="px-4 py-2 font-semibold text-sm rounded-lg bg-white text-slate-600 hover:bg-slate-100 transition">Datas Importantes</button>
-    </nav>
+    <!-- App Navigation (Segmented Control estilo iOS) -->
+    <div class="sticky top-[68px] z-40 bg-gray-50 pt-4 pb-2 px-5">
+        <div class="max-w-md mx-auto bg-gray-200/80 p-1 rounded-xl flex gap-1 backdrop-blur-sm">
+            <button onclick="mudarAba('promocoes')" id="tab-promocoes" class="flex-1 py-2 text-sm font-semibold rounded-lg bg-white text-gray-900 shadow-sm transition-all duration-200">
+                Promoções
+            </button>
+            <button onclick="mudarAba('datas')" id="tab-datas" class="flex-1 py-2 text-sm font-semibold rounded-lg text-gray-500 hover:text-gray-700 transition-all duration-200">
+                Calendário
+            </button>
+        </div>
+    </div>
 
-    <!-- Container Principal -->
-    <main class="max-w-4xl w-full mx-auto p-4 flex-grow">
+    <!-- Main Content Area -->
+    <main class="max-w-md mx-auto w-full px-5 pb-8 flex-grow">
 
         <!-- SEÇÃO 1: PROMOÇÕES -->
-        <section id="secao-promocoes">
-            <!-- Filtros por Programa -->
-            <div class="flex gap-2 overflow-x-auto pb-2 mb-4 scrollbar-none">
-                <button onclick="filtrarPrograma('TODOS')" class="filtro-btn px-3 py-1 text-xs font-medium rounded-full bg-slate-800 text-white whitespace-nowrap">Todos</button>
-                <button onclick="filtrarPrograma('Iberia')" class="filtro-btn px-3 py-1 text-xs font-medium rounded-full bg-white border border-slate-300 text-slate-700 whitespace-nowrap hover:bg-slate-100">Iberia</button>
-                <button onclick="filtrarPrograma('Latam')" class="filtro-btn px-3 py-1 text-xs font-medium rounded-full bg-white border border-slate-300 text-slate-700 whitespace-nowrap hover:bg-slate-100">Latam</button>
-                <button onclick="filtrarPrograma('Azul')" class="filtro-btn px-3 py-1 text-xs font-medium rounded-full bg-white border border-slate-300 text-slate-700 whitespace-nowrap hover:bg-slate-100">Azul</button>
-                <button onclick="filtrarPrograma('Smiles')" class="filtro-btn px-3 py-1 text-xs font-medium rounded-full bg-white border border-slate-300 text-slate-700 whitespace-nowrap hover:bg-slate-100">Smiles</button>
-                <button onclick="filtrarPrograma('Esfera')" class="filtro-btn px-3 py-1 text-xs font-medium rounded-full bg-white border border-slate-300 text-slate-700 whitespace-nowrap hover:bg-slate-100">Esfera</button>
-                <button onclick="filtrarPrograma('Livelo')" class="filtro-btn px-3 py-1 text-xs font-medium rounded-full bg-white border border-slate-300 text-slate-700 whitespace-nowrap hover:bg-slate-100">Livelo</button>
+        <section id="secao-promocoes" class="animate-fade-in mt-2">
+            <!-- Filtros Chips -->
+            <div class="flex gap-2 overflow-x-auto pb-4 pt-2 no-scrollbar">
+                <button onclick="filtrarPrograma('TODOS')" class="filtro-btn px-4 py-1.5 text-sm font-medium rounded-full bg-gray-900 text-white whitespace-nowrap shadow-sm transition active:scale-95">Todos</button>
+                <button onclick="filtrarPrograma('Iberia')" class="filtro-btn px-4 py-1.5 text-sm font-medium rounded-full bg-white border border-gray-200 text-gray-600 whitespace-nowrap shadow-sm transition active:scale-95">Iberia</button>
+                <button onclick="filtrarPrograma('Latam')" class="filtro-btn px-4 py-1.5 text-sm font-medium rounded-full bg-white border border-gray-200 text-gray-600 whitespace-nowrap shadow-sm transition active:scale-95">Latam</button>
+                <button onclick="filtrarPrograma('Azul')" class="filtro-btn px-4 py-1.5 text-sm font-medium rounded-full bg-white border border-gray-200 text-gray-600 whitespace-nowrap shadow-sm transition active:scale-95">Azul</button>
+                <button onclick="filtrarPrograma('Smiles')" class="filtro-btn px-4 py-1.5 text-sm font-medium rounded-full bg-white border border-gray-200 text-gray-600 whitespace-nowrap shadow-sm transition active:scale-95">Smiles</button>
+                <button onclick="filtrarPrograma('Esfera')" class="filtro-btn px-4 py-1.5 text-sm font-medium rounded-full bg-white border border-gray-200 text-gray-600 whitespace-nowrap shadow-sm transition active:scale-95">Esfera</button>
+                <button onclick="filtrarPrograma('Livelo')" class="filtro-btn px-4 py-1.5 text-sm font-medium rounded-full bg-white border border-gray-200 text-gray-600 whitespace-nowrap shadow-sm transition active:scale-95">Livelo</button>
             </div>
 
             <!-- Lista de Cards -->
-            <div id="lista-promocoes" class="space-y-3">
-                <div class="text-center py-10 text-slate-400 text-sm">Carregando promoções...</div>
+            <div id="lista-promocoes" class="space-y-4">
+                <!-- Skeleton Loading Inicial -->
+                <div class="flex justify-center items-center py-12 gap-2 text-gray-400">
+                    <i class="ph ph-spinner animate-spin text-2xl"></i>
+                    <span class="text-sm font-medium">Buscando oportunidades...</span>
+                </div>
             </div>
         </section>
 
-        <!-- SEÇÃO 2: DATAS IMPORTANTES -->
-        <section id="secao-datas" class="hidden">
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <table class="w-full text-left border-collapse text-sm">
-                    <thead>
-                        <tr class="bg-slate-100 text-slate-600 border-b border-slate-200">
-                            <th class="p-3 font-semibold">Programa</th>
-                            <th class="p-3 font-semibold">Evento Histórico</th>
-                            <th class="p-3 font-semibold">Mês Previsto</th>
-                            <th class="p-3 font-semibold">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabela-datas">
-                        <tr><td colspan="4" class="p-4 text-center text-slate-400">Carregando datas...</td></tr>
-                    </tbody>
-                </table>
+        <!-- SEÇÃO 2: DATAS IMPORTANTES (Card List) -->
+        <section id="secao-datas" class="hidden mt-4">
+            <div id="lista-datas" class="space-y-3">
+                <!-- Preenchido via JS -->
             </div>
         </section>
 
     </main>
 
-    <!-- Footer -->
-    <footer class="text-center py-4 text-xs text-slate-400">
-        Painel Pessoal de Milhas &bull; Sincronizado com Google Sheets
-    </footer>
-
-    <!-- Script de Integração com a API -->
     <script>
-        // COLE SUA URL DO GOOGLE APPS SCRIPT ABAIXO ENTRE AS ASPAS:
+        // ==========================================
+        // CONFIGURAÇÃO: COLE SUA URL AQUI
+        // ==========================================
         const API_URL = "https://script.google.com/macros/s/AKfycbzBhtgqxEqqJyOPM4IicpDtP40elxA7SFnLpqB2nsvu4rNqcKv9b0UvrVFl_HmOugnT/exec";
 
         let dadosGlobais = { promocoes: [], datas: [] };
         let programaAtual = "TODOS";
 
         async function carregarDados() {
+            const icone = document.getElementById("icone-atualizar");
             const btn = document.getElementById("btn-atualizar");
-            btn.innerText = "Carregando...";
+            
+            // Estado de loading visual no header
+            icone.classList.add("animate-spin");
+            btn.classList.add("bg-gray-200");
+
             try {
                 const response = await fetch(API_URL);
                 const data = await response.json();
@@ -90,9 +123,19 @@
                 renderizarDatas();
             } catch (error) {
                 console.error("Erro ao buscar dados:", error);
-                document.getElementById("lista-promocoes").innerHTML = `<div class="text-center py-10 text-red-500 text-sm">Erro ao carregar os dados. Verifique a API.</div>`;
+                document.getElementById("lista-promocoes").innerHTML = `
+                    <div class="flex flex-col items-center justify-center p-8 text-center bg-red-50 rounded-2xl border border-red-100">
+                        <i class="ph ph-warning-circle text-red-500 text-3xl mb-2"></i>
+                        <p class="text-sm text-red-700 font-medium">Falha ao conectar com o servidor.</p>
+                        <p class="text-xs text-red-500 mt-1">Verifique sua internet e a URL da API.</p>
+                    </div>`;
             }
-            btn.innerText = "Atualizar";
+            
+            // Remove estado de loading
+            setTimeout(() => {
+                icone.classList.remove("animate-spin");
+                btn.classList.remove("bg-gray-200");
+            }, 500);
         }
 
         function renderizarPromocoes() {
@@ -104,40 +147,77 @@
             }
 
             if (filtradas.length === 0) {
-                container.innerHTML = `<div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 text-center text-slate-400 text-sm">Nenhuma promoção encontrada para este programa.</div>`;
+                container.innerHTML = `
+                    <div class="flex flex-col items-center justify-center p-10 text-center border-2 border-dashed border-gray-200 rounded-2xl mt-4">
+                        <i class="ph ph-magnifying-glass text-gray-300 text-4xl mb-2"></i>
+                        <p class="text-sm text-gray-500 font-medium">Nenhuma promoção encontrada<br>para este filtro no momento.</p>
+                    </div>`;
                 return;
             }
 
             container.innerHTML = filtradas.map(p => `
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 hover:shadow transition flex flex-col gap-2">
-                    <div class="flex justify-between items-start">
-                        <span class="px-2.5 py-0.5 text-xs font-semibold bg-blue-50 text-blue-700 rounded-full">${p.programa}</span>
-                        <span class="text-xs text-slate-400">${p.dataCaptura}</span>
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 active:bg-gray-50 transition flex flex-col gap-3">
+                    <div class="flex justify-between items-center">
+                        <span class="px-2.5 py-1 text-[11px] font-bold tracking-wide uppercase bg-brand-50 text-brand-700 rounded-lg">
+                            ${p.programa}
+                        </span>
+                        <div class="flex items-center gap-1 text-gray-400 text-xs font-medium">
+                            <i class="ph ph-clock"></i>
+                            <span>${p.dataCaptura.split(' ')[0]}</span>
+                        </div>
                     </div>
-                    <h2 class="font-semibold text-slate-800 text-sm sm:text-base leading-snug">${p.titulo}</h2>
-                    <div class="flex justify-between items-center mt-1">
-                        <span class="text-xs text-slate-500 font-medium uppercase tracking-wider">${p.categoria}</span>
-                        <a href="${p.link}" target="_blank" class="text-xs font-semibold text-blue-600 hover:underline flex items-center gap-1">Ver Matéria &rarr;</a>
+                    
+                    <h2 class="font-bold text-gray-900 text-[15px] leading-snug">${p.titulo}</h2>
+                    
+                    <div class="pt-3 mt-1 border-t border-gray-50 flex justify-between items-center">
+                        <div class="flex items-center gap-1.5 text-xs text-gray-500 font-medium">
+                            <i class="ph ${p.categoria.toLowerCase().includes('compra') ? 'ph-shopping-cart' : 'ph-arrows-left-right'} text-gray-400 text-sm"></i>
+                            <span class="truncate max-w-[150px]">${p.categoria}</span>
+                        </div>
+                        <a href="${p.link}" target="_blank" class="flex items-center gap-1 px-3 py-1.5 bg-gray-900 text-white text-xs font-semibold rounded-lg hover:bg-gray-800 transition active:scale-95">
+                            Acessar <i class="ph-bold ph-arrow-right"></i>
+                        </a>
                     </div>
                 </div>
             `).join("");
         }
 
         function renderizarDatas() {
-            const tbody = document.getElementById("tabela-datas");
+            const container = document.getElementById("lista-datas");
             if (!dadosGlobais.datas || dadosGlobais.datas.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-400">Nenhuma data importante cadastrada na planilha.</td></tr>`;
+                container.innerHTML = `
+                    <div class="flex flex-col items-center justify-center p-10 text-center border-2 border-dashed border-gray-200 rounded-2xl mt-4">
+                        <i class="ph ph-calendar-blank text-gray-300 text-4xl mb-2"></i>
+                        <p class="text-sm text-gray-500 font-medium">Nenhum evento mapeado.</p>
+                    </div>`;
                 return;
             }
 
-            tbody.innerHTML = dadosGlobais.datas.map(d => `
-                <tr class="border-b border-slate-100 hover:bg-slate-50">
-                    <td class="p-3 font-medium text-slate-700">${d.programa}</td>
-                    <td class="p-3 text-slate-600">${d.evento}</td>
-                    <td class="p-3 text-slate-600">${d.mesPrevisto}</td>
-                    <td class="p-3"><span class="px-2 py-0.5 text-xs rounded-full font-medium ${d.status === 'Confirmado' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}">${d.status}</span></td>
-                </tr>
-            `).join("");
+            // Transforma a tabela em uma lista de cards verticais
+            container.innerHTML = dadosGlobais.datas.map(d => {
+                const isConfirmado = d.status.toLowerCase() === 'confirmado';
+                const statusColorClass = isConfirmado ? 'bg-green-50 text-green-700 border-green-200' : 'bg-amber-50 text-amber-700 border-amber-200';
+                const statusIcon = isConfirmado ? 'ph-check-circle' : 'ph-clock-countdown';
+
+                return `
+                <div class="flex items-center justify-between p-4 bg-white rounded-2xl shadow-sm border border-gray-100">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center border border-gray-100 flex-shrink-0">
+                            <i class="ph-fill ph-calendar-star text-gray-400 text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-900 text-[15px] leading-tight">${d.evento}</h3>
+                            <p class="text-xs text-gray-500 mt-0.5 font-medium">${d.programa} &bull; ${d.mesPrevisto}</p>
+                        </div>
+                    </div>
+                    <div class="flex-shrink-0 ml-2">
+                        <span class="flex items-center gap-1 px-2 py-1 text-[10px] font-bold uppercase tracking-wide border rounded-md ${statusColorClass}">
+                            <i class="ph ${statusIcon}"></i>
+                            ${d.status}
+                        </span>
+                    </div>
+                </div>
+            `}).join("");
         }
 
         function mudarAba(aba) {
@@ -146,16 +226,19 @@
             const btnPromo = document.getElementById("tab-promocoes");
             const btnDatas = document.getElementById("tab-datas");
 
+            const activeClass = "flex-1 py-2 text-sm font-semibold rounded-lg bg-white text-gray-900 shadow-sm transition-all duration-200";
+            const inactiveClass = "flex-1 py-2 text-sm font-semibold rounded-lg text-gray-500 hover:text-gray-700 transition-all duration-200";
+
             if (aba === 'promocoes') {
                 secPromo.classList.remove("hidden");
                 secDatas.classList.add("hidden");
-                btnPromo.className = "px-4 py-2 font-semibold text-sm rounded-lg bg-blue-600 text-white transition shadow-sm";
-                btnDatas.className = "px-4 py-2 font-semibold text-sm rounded-lg bg-white text-slate-600 hover:bg-slate-100 transition";
+                btnPromo.className = activeClass;
+                btnDatas.className = inactiveClass;
             } else {
                 secPromo.classList.add("hidden");
                 secDatas.classList.remove("hidden");
-                btnDatas.className = "px-4 py-2 font-semibold text-sm rounded-lg bg-blue-600 text-white transition shadow-sm";
-                btnPromo.className = "px-4 py-2 font-semibold text-sm rounded-lg bg-white text-slate-600 hover:bg-slate-100 transition";
+                btnDatas.className = activeClass;
+                btnPromo.className = inactiveClass;
             }
         }
 
@@ -163,16 +246,16 @@
             programaAtual = prog;
             document.querySelectorAll('.filtro-btn').forEach(btn => {
                 if (btn.innerText.toLowerCase() === prog.toLowerCase() || (prog === 'TODOS' && btn.innerText === 'Todos')) {
-                    btn.className = "filtro-btn px-3 py-1 text-xs font-medium rounded-full bg-slate-800 text-white whitespace-nowrap";
+                    btn.className = "filtro-btn px-4 py-1.5 text-sm font-medium rounded-full bg-gray-900 text-white whitespace-nowrap shadow-sm transition active:scale-95";
                 } else {
-                    btn.className = "filtro-btn px-3 py-1 text-xs font-medium rounded-full bg-white border border-slate-300 text-slate-700 whitespace-nowrap hover:bg-slate-100";
+                    btn.className = "filtro-btn px-4 py-1.5 text-sm font-medium rounded-full bg-white border border-gray-200 text-gray-600 whitespace-nowrap shadow-sm transition active:scale-95";
                 }
             });
             renderizarPromocoes();
         }
 
-        // Carrega os dados assim que a página abrir
-        carregarDados();
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', carregarDados);
     </script>
 </body>
 </html>
