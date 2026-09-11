@@ -138,12 +138,15 @@
             }, 500);
         }
 
-        function renderizarPromocoes() {
+                function renderizarPromocoes() {
             const container = document.getElementById("lista-promocoes");
             let filtradas = dadosGlobais.promocoes;
 
+            // A MUDANÇA FOI AQUI: usando .includes() em vez de ===
             if (programaAtual !== "TODOS") {
-                filtradas = filtradas.filter(p => p.programa.toLowerCase() === programaAtual.toLowerCase());
+                filtradas = filtradas.filter(p => 
+                    p.programa.toLowerCase().includes(programaAtual.toLowerCase())
+                );
             }
 
             if (filtradas.length === 0) {
@@ -181,6 +184,7 @@
                 </div>
             `).join("");
         }
+
 
         function renderizarDatas() {
             const container = document.getElementById("lista-datas");
