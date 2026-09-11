@@ -8,10 +8,10 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Phosphor Icons para ícones modernos -->
+    <!-- Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     
-    <!-- Fonte Inter (Padrão de apps modernos) -->
+    <!-- Fonte Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <script>
@@ -28,17 +28,13 @@
     </script>
 
     <style>
-        /* Oculta scrollbar horizontal mantendo o scroll */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        /* Previne o bounce effect no iOS */
         body { overscroll-behavior-y: none; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 antialiased min-h-screen flex flex-col">
 
-    <!-- Header / App Bar (Sticky + Blur) -->
     <header class="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-200">
         <div class="max-w-md mx-auto px-5 py-4 flex justify-between items-center">
             <div class="flex items-center gap-2">
@@ -51,13 +47,16 @@
         </div>
     </header>
 
-    <!-- App Navigation (Segmented Control estilo iOS) -->
+    <!-- App Navigation (3 Abas) -->
     <div class="sticky top-[68px] z-40 bg-gray-50 pt-4 pb-2 px-5">
         <div class="max-w-md mx-auto bg-gray-200/80 p-1 rounded-xl flex gap-1 backdrop-blur-sm">
-            <button onclick="mudarAba('promocoes')" id="tab-promocoes" class="flex-1 py-2 text-sm font-semibold rounded-lg bg-white text-gray-900 shadow-sm transition-all duration-200">
-                Promoções
+            <button onclick="mudarAba('ativas')" id="tab-ativas" class="flex-1 py-2 text-[13px] font-semibold rounded-lg bg-white text-gray-900 shadow-sm transition-all duration-200">
+                Ativas
             </button>
-            <button onclick="mudarAba('datas')" id="tab-datas" class="flex-1 py-2 text-sm font-semibold rounded-lg text-gray-500 hover:text-gray-700 transition-all duration-200">
+            <button onclick="mudarAba('expiradas')" id="tab-expiradas" class="flex-1 py-2 text-[13px] font-semibold rounded-lg text-gray-500 hover:text-gray-700 transition-all duration-200">
+                Expiradas
+            </button>
+            <button onclick="mudarAba('datas')" id="tab-datas" class="flex-1 py-2 text-[13px] font-semibold rounded-lg text-gray-500 hover:text-gray-700 transition-all duration-200">
                 Calendário
             </button>
         </div>
@@ -66,7 +65,7 @@
     <!-- Main Content Area -->
     <main class="max-w-md mx-auto w-full px-5 pb-8 flex-grow">
 
-        <!-- SEÇÃO 1: PROMOÇÕES -->
+        <!-- SEÇÃO 1: PROMOÇÕES (Ativas e Expiradas usam o mesmo container) -->
         <section id="secao-promocoes" class="animate-fade-in mt-2">
             <!-- Filtros Chips -->
             <div class="flex gap-2 overflow-x-auto pb-4 pt-2 no-scrollbar">
@@ -81,7 +80,6 @@
 
             <!-- Lista de Cards -->
             <div id="lista-promocoes" class="space-y-4">
-                <!-- Skeleton Loading Inicial -->
                 <div class="flex justify-center items-center py-12 gap-2 text-gray-400">
                     <i class="ph ph-spinner animate-spin text-2xl"></i>
                     <span class="text-sm font-medium">Buscando oportunidades...</span>
@@ -89,7 +87,7 @@
             </div>
         </section>
 
-        <!-- SEÇÃO 2: DATAS IMPORTANTES (Card List) -->
+        <!-- SEÇÃO 2: DATAS IMPORTANTES -->
         <section id="secao-datas" class="hidden mt-4">
             <div id="lista-datas" class="space-y-3">
                 <!-- Preenchido via JS -->
@@ -99,19 +97,16 @@
     </main>
 
     <script>
-        // ==========================================
-        // CONFIGURAÇÃO: COLE SUA URL AQUI
-        // ==========================================
         const API_URL = "https://script.google.com/macros/s/AKfycbzBhtgqxEqqJyOPM4IicpDtP40elxA7SFnLpqB2nsvu4rNqcKv9b0UvrVFl_HmOugnT/exec";
 
         let dadosGlobais = { promocoes: [], datas: [] };
         let programaAtual = "TODOS";
+        let abaVisualAtual = 'ativas'; // 'ativas', 'expiradas' ou 'datas'
 
         async function carregarDados() {
             const icone = document.getElementById("icone-atualizar");
             const btn = document.getElementById("btn-atualizar");
             
-            // Estado de loading visual no header
             icone.classList.add("animate-spin");
             btn.classList.add("bg-gray-200");
 
@@ -127,64 +122,112 @@
                     <div class="flex flex-col items-center justify-center p-8 text-center bg-red-50 rounded-2xl border border-red-100">
                         <i class="ph ph-warning-circle text-red-500 text-3xl mb-2"></i>
                         <p class="text-sm text-red-700 font-medium">Falha ao conectar com o servidor.</p>
-                        <p class="text-xs text-red-500 mt-1">Verifique sua internet e a URL da API.</p>
                     </div>`;
             }
             
-            // Remove estado de loading
             setTimeout(() => {
                 icone.classList.remove("animate-spin");
                 btn.classList.remove("bg-gray-200");
             }, 500);
         }
 
-                function renderizarPromocoes() {
-            const container = document.getElementById("lista-promocoes");
-            let filtradas = dadosGlobais.promocoes;
+        // Função para formatar a data que vem quebra do App Script
+        function formatarData(dataISO) {
+            if (!dataISO) return "";
+            if (dataISO.includes('/')) return dataISO.split(' ')[0]; // Se já estiver DD/MM/YYYY
+            
+            try {
+                const data = new Date(dataISO);
+                if (isNaN(data.getTime())) return dataISO;
+                // Força UTC para bater exatamente com a data da planilha
+                return data.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+            } catch(e) {
+                return dataISO;
+            }
+        }
 
-            // A MUDANÇA FOI AQUI: usando .includes() em vez de ===
+        function renderizarPromocoes() {
+            const container = document.getElementById("lista-promocoes");
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0); // Zera hora para comparar apenas dias
+
+            // 1. Filtro por Programa
+            let filtradas = dadosGlobais.promocoes;
             if (programaAtual !== "TODOS") {
-                filtradas = filtradas.filter(p => 
-                    p.programa.toLowerCase().includes(programaAtual.toLowerCase())
-                );
+                filtradas = filtradas.filter(p => p.programa.toLowerCase().includes(programaAtual.toLowerCase()));
             }
 
-            if (filtradas.length === 0) {
+            // 2. Separação: Ativas vs Expiradas
+            const ativas = [];
+            const expiradas = [];
+
+            filtradas.forEach(p => {
+                let isExpirada = false;
+                
+                // Se você digitou manualmente a tag no título
+                if (p.titulo.toUpperCase().includes("[EXPIRADA]")) {
+                    isExpirada = true;
+                } else {
+                    // Verifica pela data limite (que vem da Coluna A na sua planilha)
+                    const dataPromo = new Date(p.dataCaptura);
+                    if (!isNaN(dataPromo.getTime())) {
+                        if (dataPromo < hoje) isExpirada = true;
+                    }
+                }
+
+                if (isExpirada) {
+                    expiradas.push(p);
+                } else {
+                    ativas.push(p);
+                }
+            });
+
+            // 3. Ordena Expiradas da mais recente para a mais antiga
+            expiradas.sort((a, b) => new Date(b.dataCaptura) - new Date(a.dataCaptura));
+
+            const listaParaExibir = abaVisualAtual === 'expiradas' ? expiradas : ativas;
+
+            if (listaParaExibir.length === 0) {
                 container.innerHTML = `
                     <div class="flex flex-col items-center justify-center p-10 text-center border-2 border-dashed border-gray-200 rounded-2xl mt-4">
                         <i class="ph ph-magnifying-glass text-gray-300 text-4xl mb-2"></i>
-                        <p class="text-sm text-gray-500 font-medium">Nenhuma promoção encontrada<br>para este filtro no momento.</p>
+                        <p class="text-sm text-gray-500 font-medium">Nenhuma promoção encontrada<br>para esta aba.</p>
                     </div>`;
                 return;
             }
 
-            container.innerHTML = filtradas.map(p => `
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 active:bg-gray-50 transition flex flex-col gap-3">
+            container.innerHTML = listaParaExibir.map(p => {
+                const isExpiradaView = abaVisualAtual === 'expiradas';
+                // Remove a tag do título para ficar mais limpo visualmente
+                const tituloLimpo = p.titulo.replace(/\[EXPIRADA\]/gi, '').trim();
+
+                return `
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 ${isExpiradaView ? 'opacity-70 grayscale-[0.3]' : 'active:bg-gray-50'} transition flex flex-col gap-3">
                     <div class="flex justify-between items-center">
                         <span class="px-2.5 py-1 text-[11px] font-bold tracking-wide uppercase bg-brand-50 text-brand-700 rounded-lg">
                             ${p.programa}
                         </span>
                         <div class="flex items-center gap-1 text-gray-400 text-xs font-medium">
-                            <i class="ph ph-clock"></i>
-                            <span>${p.dataCaptura.split(' ')[0]}</span>
+                            <i class="ph ${isExpiradaView ? 'ph-warning-circle text-amber-500' : 'ph-clock'}"></i>
+                            <span>${isExpiradaView ? 'Expirou em ' : 'Até '}${formatarData(p.dataCaptura)}</span>
                         </div>
                     </div>
                     
-                    <h2 class="font-bold text-gray-900 text-[15px] leading-snug">${p.titulo}</h2>
+                    <h2 class="font-bold text-gray-900 text-[15px] leading-snug ${isExpiradaView ? 'line-through text-gray-500' : ''}">${tituloLimpo}</h2>
                     
                     <div class="pt-3 mt-1 border-t border-gray-50 flex justify-between items-center">
                         <div class="flex items-center gap-1.5 text-xs text-gray-500 font-medium">
                             <i class="ph ${p.categoria.toLowerCase().includes('compra') ? 'ph-shopping-cart' : 'ph-arrows-left-right'} text-gray-400 text-sm"></i>
                             <span class="truncate max-w-[150px]">${p.categoria}</span>
                         </div>
-                        <a href="${p.link}" target="_blank" class="flex items-center gap-1 px-3 py-1.5 bg-gray-900 text-white text-xs font-semibold rounded-lg hover:bg-gray-800 transition active:scale-95">
-                            Acessar <i class="ph-bold ph-arrow-right"></i>
+                        <a href="${p.link}" target="_blank" class="${isExpiradaView ? 'bg-gray-200 text-gray-500 cursor-not-allowed pointer-events-none' : 'bg-gray-900 text-white hover:bg-gray-800 active:scale-95'} flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg transition">
+                            ${isExpiradaView ? 'Encerrada' : 'Acessar <i class="ph-bold ph-arrow-right"></i>'}
                         </a>
                     </div>
                 </div>
-            `).join("");
+                `
+            }).join("");
         }
-
 
         function renderizarDatas() {
             const container = document.getElementById("lista-datas");
@@ -197,7 +240,6 @@
                 return;
             }
 
-            // Transforma a tabela em uma lista de cards verticais
             container.innerHTML = dadosGlobais.datas.map(d => {
                 const isConfirmado = d.status.toLowerCase() === 'confirmado';
                 const statusColorClass = isConfirmado ? 'bg-green-50 text-green-700 border-green-200' : 'bg-amber-50 text-amber-700 border-amber-200';
@@ -225,24 +267,31 @@
         }
 
         function mudarAba(aba) {
+            abaVisualAtual = aba;
             const secPromo = document.getElementById("secao-promocoes");
             const secDatas = document.getElementById("secao-datas");
-            const btnPromo = document.getElementById("tab-promocoes");
+            
+            const btnAtivas = document.getElementById("tab-ativas");
+            const btnExpiradas = document.getElementById("tab-expiradas");
             const btnDatas = document.getElementById("tab-datas");
 
-            const activeClass = "flex-1 py-2 text-sm font-semibold rounded-lg bg-white text-gray-900 shadow-sm transition-all duration-200";
-            const inactiveClass = "flex-1 py-2 text-sm font-semibold rounded-lg text-gray-500 hover:text-gray-700 transition-all duration-200";
+            const activeClass = "flex-1 py-2 text-[13px] font-semibold rounded-lg bg-white text-gray-900 shadow-sm transition-all duration-200";
+            const inactiveClass = "flex-1 py-2 text-[13px] font-semibold rounded-lg text-gray-500 hover:text-gray-700 transition-all duration-200";
 
-            if (aba === 'promocoes') {
+            btnAtivas.className = inactiveClass;
+            btnExpiradas.className = inactiveClass;
+            btnDatas.className = inactiveClass;
+
+            if (aba === 'ativas' || aba === 'expiradas') {
                 secPromo.classList.remove("hidden");
                 secDatas.classList.add("hidden");
-                btnPromo.className = activeClass;
-                btnDatas.className = inactiveClass;
+                if(aba === 'ativas') btnAtivas.className = activeClass;
+                if(aba === 'expiradas') btnExpiradas.className = activeClass;
+                renderizarPromocoes(); 
             } else {
                 secPromo.classList.add("hidden");
                 secDatas.classList.remove("hidden");
                 btnDatas.className = activeClass;
-                btnPromo.className = inactiveClass;
             }
         }
 
@@ -258,7 +307,6 @@
             renderizarPromocoes();
         }
 
-        // Inicialização
         document.addEventListener('DOMContentLoaded', carregarDados);
     </script>
 </body>
