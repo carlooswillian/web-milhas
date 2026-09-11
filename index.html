@@ -164,16 +164,29 @@
             filtradas.forEach(p => {
                 let isExpirada = false;
                 
-                // Se você digitou manualmente a tag no título
-                if (p.titulo.toUpperCase().includes("[EXPIRADA]")) {
-                    isExpirada = true;
-                } else {
-                    // Verifica pela data limite (que vem da Coluna A na sua planilha)
-                    const dataPromo = new Date(p.dataCaptura);
-                    if (!isNaN(dataPromo.getTime())) {
-                        if (dataPromo < hoje) isExpirada = true;
-                    }
-                }
+               // Se você digitou manualmente a tag no título
+if (p.titulo.toUpperCase().includes("[EXPIRADA]")) {
+    isExpirada = true;
+} else {
+    // Quebra a string "DD/MM/YYYY HH:MM" ou "DD/MM/YYYY" para o JS entender
+    const partesData = p.dataCaptura.split(/\/| /); 
+    
+    if (partesData.length >= 3) {
+        const dia = parseInt(partesData[0], 10);
+        const mes = parseInt(partesData[1], 10) - 1; // O mês no JS começa do 0 (Janeiro = 0)
+        const ano = parseInt(partesData[2].substring(0, 4), 10);
+        
+        const dataPromo = new Date(ano, mes, dia);
+        
+        // Verifica se a data é válida e se é menor que hoje
+        if (!isNaN(dataPromo.getTime())) {
+            if (dataPromo < hoje) {
+                isExpirada = true;
+            }
+        }
+    }
+}
+
 
                 if (isExpirada) {
                     expiradas.push(p);
