@@ -41,10 +41,12 @@
                 <i class="ph-fill ph-airplane-tilt text-brand-600 text-2xl"></i>
                 <h1 class="text-lg font-bold tracking-tight text-gray-900">Radar de Milhas</h1>
             </div>
-            <!-- Botão agora chama o forcarAtualizacao() -->
-            <button onclick="forcarAtualizacao()" id="btn-atualizar" class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition active:scale-95" title="Buscar novas promoções na web">
-                <i class="ph ph-arrows-clockwise text-lg" id="icone-atualizar"></i>
-            </button>
+            <!-- Substitua o <button id="btn-atualizar"...> antigo por este: -->
+<button onclick="forcarAtualizacao()" id="btn-atualizar" class="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition active:scale-95" title="Buscar novas promoções na web">
+    <i class="ph ph-arrows-clockwise text-lg" id="icone-atualizar"></i>
+    <span id="texto-atualizar">Buscar Notícias</span>
+</button>
+
         </div>
     </header>
 
@@ -113,38 +115,42 @@
             }
         }
 
-        // 2. FUNÇÃO DE VARREDURA MANUAL (Usa o POST acionado pelo botão)
         async function forcarAtualizacao() {
-            const icone = document.getElementById("icone-atualizar");
-            const btn = document.getElementById("btn-atualizar");
-            
-            // Efeito visual de processamento (pode demorar por causa do Gemini)
-            icone.classList.add("animate-spin");
-            btn.classList.add("bg-brand-100", "text-brand-600");
-            btn.disabled = true;
+    const icone = document.getElementById("icone-atualizar");
+    const btn = document.getElementById("btn-atualizar");
+    const texto = document.getElementById("texto-atualizar"); // Captura o span do texto
+    
+    // Efeito visual e mudança de texto
+    icone.classList.add("animate-spin");
+    btn.classList.add("bg-brand-100", "text-brand-700");
+    btn.classList.remove("bg-gray-100", "text-gray-700");
+    btn.disabled = true;
+    texto.innerText = "Buscando..."; 
 
-            try {
-                // Envia requisição POST avisando o Apps Script para rodar o rastreador
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: "atualizar"
-                });
-                
-                const data = await response.json();
-                dadosGlobais = data;
-                renderizarPromocoes();
-                renderizarDatas();
-            } catch (error) {
-                console.error("Erro ao forçar atualização:", error);
-                alert("Houve um erro ao buscar novas promoções. Tente novamente.");
-            }
-            
-            // Remove o efeito visual após terminar
-            icone.classList.remove("animate-spin");
-            btn.classList.remove("bg-brand-100", "text-brand-600");
-            btn.disabled = false;
-        }
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: "atualizar"
+        });
+        
+        const data = await response.json();
+        dadosGlobais = data;
+        renderizarPromocoes();
+        renderizarDatas();
+    } catch (error) {
+        console.error("Erro ao forçar atualização:", error);
+        alert("Houve um erro ao buscar novas promoções. Tente novamente.");
+    }
+    
+    // Retorna ao estado original
+    icone.classList.remove("animate-spin");
+    btn.classList.remove("bg-brand-100", "text-brand-700");
+    btn.classList.add("bg-gray-100", "text-gray-700");
+    btn.disabled = false;
+    texto.innerText = "Buscar Notícias"; 
+}
+
 
         function exibirErro() {
             document.getElementById("lista-promocoes").innerHTML = `
