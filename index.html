@@ -41,7 +41,8 @@
                 <i class="ph-fill ph-airplane-tilt text-brand-600 text-2xl"></i>
                 <h1 class="text-lg font-bold tracking-tight text-gray-900">Radar de Milhas</h1>
             </div>
-            <button onclick="carregarDados()" id="btn-atualizar" class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition active:scale-95">
+            <!-- Botão agora chama o forcarAtualizacao() -->
+            <button onclick="forcarAtualizacao()" id="btn-atualizar" class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition active:scale-95" title="Buscar novas promoções na web">
                 <i class="ph ph-arrows-clockwise text-lg" id="icone-atualizar"></i>
             </button>
         </div>
@@ -64,7 +65,6 @@
 
     <!-- Main Content Area -->
     <main class="max-w-md mx-auto w-full px-5 pb-8 flex-grow">
-
         <section id="secao-promocoes" class="animate-fade-in mt-2">
             <!-- Filtros Chips -->
             <div class="flex gap-2 overflow-x-auto pb-4 pt-2 no-scrollbar">
@@ -80,7 +80,7 @@
             <div id="lista-promocoes" class="space-y-4">
                 <div class="flex justify-center items-center py-12 gap-2 text-gray-400">
                     <i class="ph ph-spinner animate-spin text-2xl"></i>
-                    <span class="text-sm font-medium">Buscando oportunidades...</span>
+                    <span class="text-sm font-medium">Carregando dados...</span>
                 </div>
             </div>
         </section>
@@ -89,7 +89,6 @@
             <div id="lista-datas" class="space-y-3">
             </div>
         </section>
-
     </main>
 
     <script>
@@ -100,13 +99,8 @@
         let programaAtual = "TODOS";
         let abaVisualAtual = 'ativas';
 
+        // 1. FUNÇÃO DE CARREGAMENTO (Usa o GET para leitura rápida na abertura da página)
         async function carregarDados() {
-            const icone = document.getElementById("icone-atualizar");
-            const btn = document.getElementById("btn-atualizar");
-            
-            icone.classList.add("animate-spin");
-            btn.classList.add("bg-gray-200");
-
             try {
                 const response = await fetch(API_URL);
                 const data = await response.json();
@@ -114,59 +108,83 @@
                 renderizarPromocoes();
                 renderizarDatas();
             } catch (error) {
-                console.error("Erro ao buscar dados:", error);
-                document.getElementById("lista-promocoes").innerHTML = `
-                    <div class="flex flex-col items-center justify-center p-8 text-center bg-red-50 rounded-2xl border border-red-100">
-                        <i class="ph ph-warning-circle text-red-500 text-3xl mb-2"></i>
-                        <p class="text-sm text-red-700 font-medium">Falha ao conectar com o servidor.</p>
-                    </div>`;
+                console.error("Erro ao carregar dados iniciais:", error);
+                exibirErro();
             }
-            
-            setTimeout(() => {
-                icone.classList.remove("animate-spin");
-                btn.classList.remove("bg-gray-200");
-            }, 500);
         }
 
-        // 💡 FUNÇÃO NOVA: Analisa datas de forma robusta e segura
+        // 2. FUNÇÃO DE VARREDURA MANUAL (Usa o POST acionado pelo botão)
+        async function forcarAtualizacao() {
+            const icone = document.getElementById("icone-atualizar");
+            const btn = document.getElementById("btn-atualizar");
+            
+            // Efeito visual de processamento (pode demorar por causa do Gemini)
+            icone.classList.add("animate-spin");
+            btn.classList.add("bg-brand-100", "text-brand-600");
+            btn.disabled = true;
+
+            try {
+                // Envia requisição POST avisando o Apps Script para rodar o rastreador
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: "atualizar"
+                });
+                
+                const data = await response.json();
+                dadosGlobais = data;
+                renderizarPromocoes();
+                renderizarDatas();
+            } catch (error) {
+                console.error("Erro ao forçar atualização:", error);
+                alert("Houve um erro ao buscar novas promoções. Tente novamente.");
+            }
+            
+            // Remove o efeito visual após terminar
+            icone.classList.remove("animate-spin");
+            btn.classList.remove("bg-brand-100", "text-brand-600");
+            btn.disabled = false;
+        }
+
+        function exibirErro() {
+            document.getElementById("lista-promocoes").innerHTML = `
+                <div class="flex flex-col items-center justify-center p-8 text-center bg-red-50 rounded-2xl border border-red-100">
+                    <i class="ph ph-warning-circle text-red-500 text-3xl mb-2"></i>
+                    <p class="text-sm text-red-700 font-medium">Falha ao conectar com o servidor.</p>
+                </div>`;
+        }
+
         function parseDataSegura(dataInput) {
             if (!dataInput) return null;
-            
-            // Verifica formato legado (ex: "10/09/2026 17:58")
             if (typeof dataInput === 'string' && dataInput.includes('/')) {
                 const partes = dataInput.split(/[\/\s:]/);
                 if (partes.length >= 3) {
                     const dia = parseInt(partes[0], 10);
-                    const mes = parseInt(partes[1], 10) - 1; // JS conta meses de 0 a 11
+                    const mes = parseInt(partes[1], 10) - 1; 
                     const ano = parseInt(partes[2].substring(0, 4), 10);
                     return new Date(ano, mes, dia);
                 }
             }
-            
-            // Lida com o novo formato ISO (ex: "2026-09-10T17:58:00.000Z")
             const dateISO = new Date(dataInput);
             if (!isNaN(dateISO.getTime())) {
                 return dateISO;
             }
-            
             return null;
         }
 
         function formatarData(dataISO) {
             const dataPromo = parseDataSegura(dataISO);
             if (!dataPromo) return dataISO;
-
             const dia = String(dataPromo.getDate()).padStart(2, '0');
             const mes = String(dataPromo.getMonth() + 1).padStart(2, '0');
             const ano = dataPromo.getFullYear();
-            
             return `${dia}/${mes}/${ano}`;
         }
 
         function renderizarPromocoes() {
             const container = document.getElementById("lista-promocoes");
             const hoje = new Date();
-            hoje.setHours(0, 0, 0, 0); // Zera hora para comparar dias inteiros
+            hoje.setHours(0, 0, 0, 0); 
 
             let filtradas = dadosGlobais.promocoes;
             if (programaAtual !== "TODOS") {
@@ -184,7 +202,7 @@
                 } else {
                     const dataPromo = parseDataSegura(p.dataCaptura);
                     if (dataPromo) {
-                        dataPromo.setHours(0, 0, 0, 0); // Isola apenas a comparação do dia
+                        dataPromo.setHours(0, 0, 0, 0); 
                         if (dataPromo < hoje) {
                             isExpirada = true;
                         }
