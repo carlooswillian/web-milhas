@@ -65,7 +65,6 @@
     <!-- Main Content Area -->
     <main class="max-w-md mx-auto w-full px-5 pb-8 flex-grow">
 
-        <!-- SEÇÃO 1: PROMOÇÕES (Ativas e Expiradas usam o mesmo container) -->
         <section id="secao-promocoes" class="animate-fade-in mt-2">
             <!-- Filtros Chips -->
             <div class="flex gap-2 overflow-x-auto pb-4 pt-2 no-scrollbar">
@@ -78,7 +77,6 @@
                 <button onclick="filtrarPrograma('Livelo')" class="filtro-btn px-4 py-1.5 text-sm font-medium rounded-full bg-white border border-gray-200 text-gray-600 whitespace-nowrap shadow-sm transition active:scale-95">Livelo</button>
             </div>
 
-            <!-- Lista de Cards -->
             <div id="lista-promocoes" class="space-y-4">
                 <div class="flex justify-center items-center py-12 gap-2 text-gray-400">
                     <i class="ph ph-spinner animate-spin text-2xl"></i>
@@ -87,21 +85,20 @@
             </div>
         </section>
 
-        <!-- SEÇÃO 2: DATAS IMPORTANTES -->
         <section id="secao-datas" class="hidden mt-4">
             <div id="lista-datas" class="space-y-3">
-                <!-- Preenchido via JS -->
             </div>
         </section>
 
     </main>
 
     <script>
+        // Substitua pela URL da sua API se houver um novo deploy.
         const API_URL = "https://script.google.com/macros/s/AKfycbzBhtgqxEqqJyOPM4IicpDtP40elxA7SFnLpqB2nsvu4rNqcKv9b0UvrVFl_HmOugnT/exec";
 
         let dadosGlobais = { promocoes: [], datas: [] };
         let programaAtual = "TODOS";
-        let abaVisualAtual = 'ativas'; // 'ativas', 'expiradas' ou 'datas'
+        let abaVisualAtual = 'ativas';
 
         async function carregarDados() {
             const icone = document.getElementById("icone-atualizar");
@@ -131,62 +128,68 @@
             }, 500);
         }
 
-        // Função para formatar a data que vem quebra do App Script
-        function formatarData(dataISO) {
-            if (!dataISO) return "";
-            if (dataISO.includes('/')) return dataISO.split(' ')[0]; // Se já estiver DD/MM/YYYY
+        // 💡 FUNÇÃO NOVA: Analisa datas de forma robusta e segura
+        function parseDataSegura(dataInput) {
+            if (!dataInput) return null;
             
-            try {
-                const data = new Date(dataISO);
-                if (isNaN(data.getTime())) return dataISO;
-                // Força UTC para bater exatamente com a data da planilha
-                return data.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
-            } catch(e) {
-                return dataISO;
+            // Verifica formato legado (ex: "10/09/2026 17:58")
+            if (typeof dataInput === 'string' && dataInput.includes('/')) {
+                const partes = dataInput.split(/[\/\s:]/);
+                if (partes.length >= 3) {
+                    const dia = parseInt(partes[0], 10);
+                    const mes = parseInt(partes[1], 10) - 1; // JS conta meses de 0 a 11
+                    const ano = parseInt(partes[2].substring(0, 4), 10);
+                    return new Date(ano, mes, dia);
+                }
             }
+            
+            // Lida com o novo formato ISO (ex: "2026-09-10T17:58:00.000Z")
+            const dateISO = new Date(dataInput);
+            if (!isNaN(dateISO.getTime())) {
+                return dateISO;
+            }
+            
+            return null;
+        }
+
+        function formatarData(dataISO) {
+            const dataPromo = parseDataSegura(dataISO);
+            if (!dataPromo) return dataISO;
+
+            const dia = String(dataPromo.getDate()).padStart(2, '0');
+            const mes = String(dataPromo.getMonth() + 1).padStart(2, '0');
+            const ano = dataPromo.getFullYear();
+            
+            return `${dia}/${mes}/${ano}`;
         }
 
         function renderizarPromocoes() {
             const container = document.getElementById("lista-promocoes");
             const hoje = new Date();
-            hoje.setHours(0, 0, 0, 0); // Zera hora para comparar apenas dias
+            hoje.setHours(0, 0, 0, 0); // Zera hora para comparar dias inteiros
 
-            // 1. Filtro por Programa
             let filtradas = dadosGlobais.promocoes;
             if (programaAtual !== "TODOS") {
                 filtradas = filtradas.filter(p => p.programa.toLowerCase().includes(programaAtual.toLowerCase()));
             }
 
-            // 2. Separação: Ativas vs Expiradas
             const ativas = [];
             const expiradas = [];
 
             filtradas.forEach(p => {
                 let isExpirada = false;
                 
-               // Se você digitou manualmente a tag no título
-if (p.titulo.toUpperCase().includes("[EXPIRADA]")) {
-    isExpirada = true;
-} else {
-    // Quebra a string "DD/MM/YYYY HH:MM" ou "DD/MM/YYYY" para o JS entender
-    const partesData = p.dataCaptura.split(/\/| /); 
-    
-    if (partesData.length >= 3) {
-        const dia = parseInt(partesData[0], 10);
-        const mes = parseInt(partesData[1], 10) - 1; // O mês no JS começa do 0 (Janeiro = 0)
-        const ano = parseInt(partesData[2].substring(0, 4), 10);
-        
-        const dataPromo = new Date(ano, mes, dia);
-        
-        // Verifica se a data é válida e se é menor que hoje
-        if (!isNaN(dataPromo.getTime())) {
-            if (dataPromo < hoje) {
-                isExpirada = true;
-            }
-        }
-    }
-}
-
+                if (p.titulo.toUpperCase().includes("[EXPIRADA]")) {
+                    isExpirada = true;
+                } else {
+                    const dataPromo = parseDataSegura(p.dataCaptura);
+                    if (dataPromo) {
+                        dataPromo.setHours(0, 0, 0, 0); // Isola apenas a comparação do dia
+                        if (dataPromo < hoje) {
+                            isExpirada = true;
+                        }
+                    }
+                }
 
                 if (isExpirada) {
                     expiradas.push(p);
@@ -195,8 +198,11 @@ if (p.titulo.toUpperCase().includes("[EXPIRADA]")) {
                 }
             });
 
-            // 3. Ordena Expiradas da mais recente para a mais antiga
-            expiradas.sort((a, b) => new Date(b.dataCaptura) - new Date(a.dataCaptura));
+            expiradas.sort((a, b) => {
+                const dateA = parseDataSegura(a.dataCaptura) || new Date(0);
+                const dateB = parseDataSegura(b.dataCaptura) || new Date(0);
+                return dateB - dateA;
+            });
 
             const listaParaExibir = abaVisualAtual === 'expiradas' ? expiradas : ativas;
 
@@ -211,7 +217,6 @@ if (p.titulo.toUpperCase().includes("[EXPIRADA]")) {
 
             container.innerHTML = listaParaExibir.map(p => {
                 const isExpiradaView = abaVisualAtual === 'expiradas';
-                // Remove a tag do título para ficar mais limpo visualmente
                 const tituloLimpo = p.titulo.replace(/\[EXPIRADA\]/gi, '').trim();
 
                 return `
