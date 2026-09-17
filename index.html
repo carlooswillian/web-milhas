@@ -31,27 +31,31 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         body { overscroll-behavior-y: none; }
+        
+        /* Animações do Modal */
+        .modal-enter { opacity: 1; pointer-events: auto; }
+        .modal-exit { opacity: 0; pointer-events: none; transition: opacity 0.2s ease; }
+        .modal-scale-enter { transform: scale(1); opacity: 1; }
+        .modal-scale-exit { transform: scale(0.95); opacity: 0; transition: all 0.2s ease; }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 antialiased min-h-screen flex flex-col">
+<body class="bg-gray-50 text-gray-800 antialiased min-h-screen flex flex-col relative">
 
-    <header class="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-200">
+    <header class="sticky top-0 z-40 bg-white/80 backdrop-blur-lg border-b border-gray-200">
         <div class="max-w-md mx-auto px-5 py-4 flex justify-between items-center">
             <div class="flex items-center gap-2">
                 <i class="ph-fill ph-airplane-tilt text-brand-600 text-2xl"></i>
                 <h1 class="text-lg font-bold tracking-tight text-gray-900">Radar de Milhas</h1>
             </div>
-            <!-- Substitua o <button id="btn-atualizar"...> antigo por este: -->
-<button onclick="forcarAtualizacao()" id="btn-atualizar" class="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition active:scale-95" title="Buscar novas promoções na web">
-    <i class="ph ph-arrows-clockwise text-lg" id="icone-atualizar"></i>
-    <span id="texto-atualizar">Buscar</span>
-</button>
-
+            <button onclick="forcarAtualizacao()" id="btn-atualizar" class="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition active:scale-95" title="Buscar novas promoções na web">
+                <i class="ph ph-arrows-clockwise text-lg" id="icone-atualizar"></i>
+                <span id="texto-atualizar">Buscar</span>
+            </button>
         </div>
     </header>
 
     <!-- App Navigation (3 Abas) -->
-    <div class="sticky top-[68px] z-40 bg-gray-50 pt-4 pb-2 px-5">
+    <div class="sticky top-[68px] z-30 bg-gray-50 pt-4 pb-2 px-5">
         <div class="max-w-md mx-auto bg-gray-200/80 p-1 rounded-xl flex gap-1 backdrop-blur-sm">
             <button onclick="mudarAba('ativas')" id="tab-ativas" class="flex-1 py-2 text-[13px] font-semibold rounded-lg bg-white text-gray-900 shadow-sm transition-all duration-200">
                 Ativas
@@ -67,8 +71,9 @@
 
     <!-- Main Content Area -->
     <main class="max-w-md mx-auto w-full px-5 pb-8 flex-grow">
+        
+        <!-- SEÇÃO: PROMOÇÕES -->
         <section id="secao-promocoes" class="animate-fade-in mt-2">
-            <!-- Filtros Chips -->
             <div class="flex gap-2 overflow-x-auto pb-4 pt-2 no-scrollbar">
                 <button onclick="filtrarPrograma('TODOS')" class="filtro-btn px-4 py-1.5 text-sm font-medium rounded-full bg-gray-900 text-white whitespace-nowrap shadow-sm transition active:scale-95">Todos</button>
                 <button onclick="filtrarPrograma('Iberia')" class="filtro-btn px-4 py-1.5 text-sm font-medium rounded-full bg-white border border-gray-200 text-gray-600 whitespace-nowrap shadow-sm transition active:scale-95">Iberia</button>
@@ -78,7 +83,6 @@
                 <button onclick="filtrarPrograma('Esfera')" class="filtro-btn px-4 py-1.5 text-sm font-medium rounded-full bg-white border border-gray-200 text-gray-600 whitespace-nowrap shadow-sm transition active:scale-95">Esfera</button>
                 <button onclick="filtrarPrograma('Livelo')" class="filtro-btn px-4 py-1.5 text-sm font-medium rounded-full bg-white border border-gray-200 text-gray-600 whitespace-nowrap shadow-sm transition active:scale-95">Livelo</button>
             </div>
-
             <div id="lista-promocoes" class="space-y-4">
                 <div class="flex justify-center items-center py-12 gap-2 text-gray-400">
                     <i class="ph ph-spinner animate-spin text-2xl"></i>
@@ -87,70 +91,120 @@
             </div>
         </section>
 
+        <!-- SEÇÃO: CALENDÁRIO -->
         <section id="secao-datas" class="hidden mt-4">
-            <div id="lista-datas" class="space-y-3">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                <!-- Cabeçalho do Calendário -->
+                <div class="flex justify-between items-center mb-6">
+                    <button onclick="mesAnterior()" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-50 text-gray-600 hover:bg-gray-100 transition active:scale-95">
+                        <i class="ph-bold ph-caret-left"></i>
+                    </button>
+                    <h2 id="calendario-mes" class="text-base font-bold text-gray-900 capitalize">Novembro 2026</h2>
+                    <button onclick="proximoMes()" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-50 text-gray-600 hover:bg-gray-100 transition active:scale-95">
+                        <i class="ph-bold ph-caret-right"></i>
+                    </button>
+                </div>
+
+                <!-- Dias da Semana -->
+                <div class="grid grid-cols-7 gap-1 text-center mb-2">
+                    <span class="text-[10px] font-bold text-gray-400 uppercase">Dom</span>
+                    <span class="text-[10px] font-bold text-gray-400 uppercase">Seg</span>
+                    <span class="text-[10px] font-bold text-gray-400 uppercase">Ter</span>
+                    <span class="text-[10px] font-bold text-gray-400 uppercase">Qua</span>
+                    <span class="text-[10px] font-bold text-gray-400 uppercase">Qui</span>
+                    <span class="text-[10px] font-bold text-gray-400 uppercase">Sex</span>
+                    <span class="text-[10px] font-bold text-gray-400 uppercase">Sáb</span>
+                </div>
+
+                <!-- Grid do Calendário -->
+                <div id="calendario-grid" class="grid grid-cols-7 gap-1">
+                    <!-- Gerado dinamicamente via JS -->
+                </div>
+            </div>
+            
+            <!-- Lista Próximos Eventos do Mês Abaixo -->
+            <div class="mt-6">
+                <h3 class="text-sm font-bold text-gray-900 mb-3 ml-1">Eventos do Mês</h3>
+                <div id="lista-eventos-mes" class="space-y-3">
+                    <!-- Gerado dinamicamente -->
+                </div>
             </div>
         </section>
     </main>
 
+    <!-- MODAL POPUP (Invisível por padrão) -->
+    <div id="modal-overlay" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-5 modal-exit" onclick="fecharModal(event)">
+        <div id="modal-content" class="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl modal-scale-exit relative" onclick="event.stopPropagation()">
+            
+            <!-- Botão Fechar -->
+            <button onclick="fecharModal(event)" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-gray-100 text-gray-500 rounded-full hover:bg-gray-200 transition active:scale-95 z-10">
+                <i class="ph-bold ph-x text-sm"></i>
+            </button>
+
+            <!-- Conteúdo Dinâmico do Modal -->
+            <div id="modal-body">
+                <!-- Preenchido via JS -->
+            </div>
+            
+        </div>
+    </div>
+
     <script>
-        // Substitua pela URL da sua API se houver um novo deploy.
+        // COLOQUE AQUI A SUA NOVA URL DO APPS SCRIPT
         const API_URL = "https://script.google.com/macros/s/AKfycbzBhtgqxEqqJyOPM4IicpDtP40elxA7SFnLpqB2nsvu4rNqcKv9b0UvrVFl_HmOugnT/exec";
 
         let dadosGlobais = { promocoes: [], datas: [] };
         let programaAtual = "TODOS";
         let abaVisualAtual = 'ativas';
+        
+        // Controle do Calendário
+        let dataCalendario = new Date();
 
-        // 1. FUNÇÃO DE CARREGAMENTO (Usa o GET para leitura rápida na abertura da página)
+        // Inicialização
         async function carregarDados() {
             try {
                 const response = await fetch(API_URL);
                 const data = await response.json();
                 dadosGlobais = data;
                 renderizarPromocoes();
-                renderizarDatas();
+                renderizarCalendario();
             } catch (error) {
-                console.error("Erro ao carregar dados iniciais:", error);
+                console.error("Erro ao carregar dados:", error);
                 exibirErro();
             }
         }
 
         async function forcarAtualizacao() {
-    const icone = document.getElementById("icone-atualizar");
-    const btn = document.getElementById("btn-atualizar");
-    const texto = document.getElementById("texto-atualizar"); // Captura o span do texto
-    
-    // Efeito visual e mudança de texto
-    icone.classList.add("animate-spin");
-    btn.classList.add("bg-brand-100", "text-brand-700");
-    btn.classList.remove("bg-gray-100", "text-gray-700");
-    btn.disabled = true;
-    texto.innerText = "Buscando..."; 
+            const icone = document.getElementById("icone-atualizar");
+            const btn = document.getElementById("btn-atualizar");
+            const texto = document.getElementById("texto-atualizar"); 
+            
+            icone.classList.add("animate-spin");
+            btn.classList.add("bg-brand-100", "text-brand-700");
+            btn.classList.remove("bg-gray-100", "text-gray-700");
+            btn.disabled = true;
+            texto.innerText = "Buscando..."; 
 
-    try {
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: "atualizar"
-        });
-        
-        const data = await response.json();
-        dadosGlobais = data;
-        renderizarPromocoes();
-        renderizarDatas();
-    } catch (error) {
-        console.error("Erro ao forçar atualização:", error);
-        alert("Houve um erro ao buscar novas promoções. Tente novamente.");
-    }
-    
-    // Retorna ao estado original
-    icone.classList.remove("animate-spin");
-    btn.classList.remove("bg-brand-100", "text-brand-700");
-    btn.classList.add("bg-gray-100", "text-gray-700");
-    btn.disabled = false;
-    texto.innerText = "Buscar Notícias"; 
-}
-
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: "atualizar"
+                });
+                const data = await response.json();
+                dadosGlobais = data;
+                renderizarPromocoes();
+                renderizarCalendario();
+            } catch (error) {
+                alert("Houve um erro ao buscar novas promoções.");
+            }
+            
+            icone.classList.remove("animate-spin");
+            btn.classList.remove("bg-brand-100", "text-brand-700");
+            btn.classList.add("bg-gray-100", "text-gray-700");
+            btn.disabled = false;
+            texto.innerText = "Buscar"; 
+        }
 
         function exibirErro() {
             document.getElementById("lista-promocoes").innerHTML = `
@@ -172,9 +226,7 @@
                 }
             }
             const dateISO = new Date(dataInput);
-            if (!isNaN(dateISO.getTime())) {
-                return dateISO;
-            }
+            if (!isNaN(dateISO.getTime())) return dateISO;
             return null;
         }
 
@@ -187,6 +239,7 @@
             return `${dia}/${mes}/${ano}`;
         }
 
+        // --- LÓGICA DE PROMOÇÕES (Mantida igual) ---
         function renderizarPromocoes() {
             const container = document.getElementById("lista-promocoes");
             const hoje = new Date();
@@ -201,32 +254,17 @@
             const expiradas = [];
 
             filtradas.forEach(p => {
-                let isExpirada = false;
-                
-                if (p.titulo.toUpperCase().includes("[EXPIRADA]")) {
-                    isExpirada = true;
-                } else {
+                let isExpirada = p.titulo.toUpperCase().includes("[EXPIRADA]");
+                if (!isExpirada) {
                     const dataPromo = parseDataSegura(p.dataCaptura);
-                    if (dataPromo) {
-                        dataPromo.setHours(0, 0, 0, 0); 
-                        if (dataPromo < hoje) {
-                            isExpirada = true;
-                        }
+                    if (dataPromo && (dataPromo.setHours(0,0,0,0) < hoje)) {
+                        isExpirada = true;
                     }
                 }
-
-                if (isExpirada) {
-                    expiradas.push(p);
-                } else {
-                    ativas.push(p);
-                }
+                isExpirada ? expiradas.push(p) : ativas.push(p);
             });
 
-            expiradas.sort((a, b) => {
-                const dateA = parseDataSegura(a.dataCaptura) || new Date(0);
-                const dateB = parseDataSegura(b.dataCaptura) || new Date(0);
-                return dateB - dateA;
-            });
+            expiradas.sort((a, b) => (parseDataSegura(b.dataCaptura) || 0) - (parseDataSegura(a.dataCaptura) || 0));
 
             const listaParaExibir = abaVisualAtual === 'expiradas' ? expiradas : ativas;
 
@@ -234,117 +272,233 @@
                 container.innerHTML = `
                     <div class="flex flex-col items-center justify-center p-10 text-center border-2 border-dashed border-gray-200 rounded-2xl mt-4">
                         <i class="ph ph-magnifying-glass text-gray-300 text-4xl mb-2"></i>
-                        <p class="text-sm text-gray-500 font-medium">Nenhuma promoção encontrada<br>para esta aba.</p>
+                        <p class="text-sm text-gray-500 font-medium">Nenhuma promoção encontrada.</p>
                     </div>`;
                 return;
             }
 
             container.innerHTML = listaParaExibir.map(p => {
-                const isExpiradaView = abaVisualAtual === 'expiradas';
+                const isExp = abaVisualAtual === 'expiradas';
                 const tituloLimpo = p.titulo.replace(/\[EXPIRADA\]/gi, '').trim();
 
                 return `
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 ${isExpiradaView ? 'opacity-70 grayscale-[0.3]' : 'active:bg-gray-50'} transition flex flex-col gap-3">
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 ${isExp ? 'opacity-70 grayscale-[0.3]' : 'active:bg-gray-50'} transition flex flex-col gap-3">
                     <div class="flex justify-between items-center">
-                        <span class="px-2.5 py-1 text-[11px] font-bold tracking-wide uppercase bg-brand-50 text-brand-700 rounded-lg">
-                            ${p.programa}
-                        </span>
+                        <span class="px-2.5 py-1 text-[11px] font-bold tracking-wide uppercase bg-brand-50 text-brand-700 rounded-lg">${p.programa}</span>
                         <div class="flex items-center gap-1 text-gray-400 text-xs font-medium">
-                            <i class="ph ${isExpiradaView ? 'ph-warning-circle text-amber-500' : 'ph-clock'}"></i>
-                            <span>${isExpiradaView ? 'Expirou em ' : 'Até '}${formatarData(p.dataCaptura)}</span>
+                            <i class="ph ${isExp ? 'ph-warning-circle text-amber-500' : 'ph-clock'}"></i>
+                            <span>${isExp ? 'Expirou ' : 'Até '}${formatarData(p.dataCaptura)}</span>
                         </div>
                     </div>
-                    
-                    <h2 class="font-bold text-gray-900 text-[15px] leading-snug ${isExpiradaView ? 'line-through text-gray-500' : ''}">${tituloLimpo}</h2>
-                    
+                    <h2 class="font-bold text-gray-900 text-[15px] leading-snug ${isExp ? 'line-through text-gray-500' : ''}">${tituloLimpo}</h2>
                     <div class="pt-3 mt-1 border-t border-gray-50 flex justify-between items-center">
                         <div class="flex items-center gap-1.5 text-xs text-gray-500 font-medium">
                             <i class="ph ${p.categoria.toLowerCase().includes('compra') ? 'ph-shopping-cart' : 'ph-arrows-left-right'} text-gray-400 text-sm"></i>
                             <span class="truncate max-w-[150px]">${p.categoria}</span>
                         </div>
-                        <a href="${p.link}" target="_blank" class="${isExpiradaView ? 'bg-gray-200 text-gray-500 cursor-not-allowed pointer-events-none' : 'bg-gray-900 text-white hover:bg-gray-800 active:scale-95'} flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg transition">
-                            ${isExpiradaView ? 'Encerrada' : 'Acessar <i class="ph-bold ph-arrow-right"></i>'}
+                        <a href="${p.link}" target="_blank" class="${isExp ? 'bg-gray-200 text-gray-500 pointer-events-none' : 'bg-gray-900 text-white hover:bg-gray-800'} flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg transition">
+                            ${isExp ? 'Encerrada' : 'Acessar <i class="ph-bold ph-arrow-right"></i>'}
                         </a>
                     </div>
-                </div>
-                `
+                </div>`
             }).join("");
         }
 
-        function renderizarDatas() {
-            const container = document.getElementById("lista-datas");
-            if (!dadosGlobais.datas || dadosGlobais.datas.length === 0) {
-                container.innerHTML = `
-                    <div class="flex flex-col items-center justify-center p-10 text-center border-2 border-dashed border-gray-200 rounded-2xl mt-4">
-                        <i class="ph ph-calendar-blank text-gray-300 text-4xl mb-2"></i>
-                        <p class="text-sm text-gray-500 font-medium">Nenhum evento mapeado.</p>
-                    </div>`;
-                return;
+        // --- LÓGICA DO CALENDÁRIO ---
+        const nomesMeses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+
+        function mesAnterior() {
+            dataCalendario.setMonth(dataCalendario.getMonth() - 1);
+            renderizarCalendario();
+        }
+
+        function proximoMes() {
+            dataCalendario.setMonth(dataCalendario.getMonth() + 1);
+            renderizarCalendario();
+        }
+
+        function renderizarCalendario() {
+            const grid = document.getElementById('calendario-grid');
+            const titulo = document.getElementById('calendario-mes');
+            const listaMes = document.getElementById('lista-eventos-mes');
+            
+            const ano = dataCalendario.getFullYear();
+            const mes = dataCalendario.getMonth();
+            
+            titulo.textContent = `${nomesMeses[mes]} ${ano}`;
+            
+            const primeiroDia = new Date(ano, mes, 1).getDay();
+            const diasNoMes = new Date(ano, mes + 1, 0).getDate();
+            const hoje = new Date();
+            
+            let htmlGrid = '';
+            
+            // Slots vazios antes do dia 1
+            for (let i = 0; i < primeiroDia; i++) {
+                htmlGrid += `<div class="aspect-square"></div>`;
             }
 
-            container.innerHTML = dadosGlobais.datas.map(d => {
-                const isConfirmado = d.status.toLowerCase() === 'confirmado';
-                const statusColorClass = isConfirmado ? 'bg-green-50 text-green-700 border-green-200' : 'bg-amber-50 text-amber-700 border-amber-200';
-                const statusIcon = isConfirmado ? 'ph-check-circle' : 'ph-clock-countdown';
+            let eventosDesteMes = [];
+
+            // Dias do mês
+            for (let dia = 1; dia <= diasNoMes; dia++) {
+                // Filtra eventos para o dia exato
+                const eventosDia = (dadosGlobais.datas || []).filter(ev => {
+                    const dataEv = parseDataSegura(ev.dataPrevista);
+                    return dataEv && dataEv.getDate() === dia && dataEv.getMonth() === mes && dataEv.getFullYear() === ano;
+                });
+
+                if(eventosDia.length > 0) {
+                    eventosDesteMes.push(...eventosDia);
+                }
+
+                let dotsHTML = '';
+                if (eventosDia.length > 0) {
+                    dotsHTML = `<div class="flex gap-[2px] mt-1 absolute bottom-1.5">`;
+                    eventosDia.slice(0, 3).forEach(ev => {
+                        const cor = ev.status.toLowerCase() === 'confirmado' ? 'bg-green-500' : 'bg-brand-500';
+                        dotsHTML += `<div class="w-1.5 h-1.5 rounded-full ${cor}"></div>`;
+                    });
+                    if(eventosDia.length > 3) dotsHTML += `<div class="w-1.5 h-1.5 rounded-full bg-gray-400"></div>`;
+                    dotsHTML += `</div>`;
+                }
+
+                const isHoje = (dia === hoje.getDate() && mes === hoje.getMonth() && ano === hoje.getFullYear());
+                const classeNum = isHoje ? 'bg-brand-600 text-white font-bold' : 'text-gray-700 font-medium';
+                
+                // Se tiver evento, é clicável
+                const attrClick = eventosDia.length > 0 ? `onclick="abrirModalDia(${ano}, ${mes}, ${dia})"` : '';
+                const classeCard = eventosDia.length > 0 ? 'bg-brand-50/50 hover:bg-brand-50 cursor-pointer active:scale-95 border border-brand-100' : 'border border-transparent';
+
+                htmlGrid += `
+                <div ${attrClick} class="aspect-square flex flex-col items-center justify-start pt-1 pb-1 rounded-xl transition-all relative ${classeCard}">
+                    <span class="text-[13px] w-7 h-7 flex items-center justify-center rounded-full ${classeNum}">${dia}</span>
+                    ${dotsHTML}
+                </div>`;
+            }
+            
+            grid.innerHTML = htmlGrid;
+
+            // Renderiza Lista logo abaixo do calendário
+            if (eventosDesteMes.length === 0) {
+                listaMes.innerHTML = `<p class="text-xs text-gray-400 text-center py-4">Nenhum evento mapeado para este mês.</p>`;
+            } else {
+                listaMes.innerHTML = eventosDesteMes.map(gerarCardEventoMinimo).join('');
+            }
+        }
+
+        // --- LÓGICA DO MODAL ---
+        function abrirModalDia(ano, mes, dia) {
+            const overlay = document.getElementById('modal-overlay');
+            const content = document.getElementById('modal-content');
+            const body = document.getElementById('modal-body');
+
+            const eventosDia = dadosGlobais.datas.filter(ev => {
+                const dataEv = parseDataSegura(ev.dataPrevista);
+                return dataEv && dataEv.getDate() === dia && dataEv.getMonth() === mes && dataEv.getFullYear() === ano;
+            });
+
+            // Formata a data pro cabeçalho do Modal
+            const dataExtensa = `${String(dia).padStart(2,'0')} de ${nomesMeses[mes]}`;
+
+            let htmlEventos = eventosDia.map(ev => {
+                const isConfirmado = ev.status.toLowerCase() === 'confirmado';
+                const corBadge = isConfirmado ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700';
+                const iconBadge = isConfirmado ? 'ph-check-circle' : 'ph-clock-countdown';
 
                 return `
-                <div class="flex items-center justify-between p-4 bg-white rounded-2xl shadow-sm border border-gray-100">
-                    <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center border border-gray-100 flex-shrink-0">
-                            <i class="ph-fill ph-calendar-star text-gray-400 text-xl"></i>
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-gray-900 text-[15px] leading-tight">${d.evento}</h3>
-                            <p class="text-xs text-gray-500 mt-0.5 font-medium">${d.programa} &bull; ${d.mesPrevisto}</p>
-                        </div>
-                    </div>
-                    <div class="flex-shrink-0 ml-2">
-                        <span class="flex items-center gap-1 px-2 py-1 text-[10px] font-bold uppercase tracking-wide border rounded-md ${statusColorClass}">
-                            <i class="ph ${statusIcon}"></i>
-                            ${d.status}
+                <div class="bg-gray-50 border border-gray-100 rounded-2xl p-4">
+                    <span class="inline-block px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-gray-200 text-gray-700 rounded-md mb-2">
+                        ${ev.programa}
+                    </span>
+                    <h3 class="font-bold text-gray-900 text-base leading-snug mb-3">${ev.evento}</h3>
+                    
+                    <div class="flex justify-between items-center pt-3 border-t border-gray-200/60">
+                        <span class="text-xs text-gray-500 font-medium">Status da promoção:</span>
+                        <span class="flex items-center gap-1 px-2 py-1 text-[10px] font-bold uppercase tracking-wide rounded-md ${corBadge}">
+                            <i class="ph ${iconBadge}"></i> ${ev.status}
                         </span>
                     </div>
+                </div>`;
+            }).join('<div class="h-3"></div>');
+
+            body.innerHTML = `
+                <div class="bg-gray-900 px-6 py-5 text-white">
+                    <div class="flex items-center gap-2 text-brand-400 mb-1">
+                        <i class="ph-fill ph-calendar-blank"></i>
+                        <span class="text-xs font-bold uppercase tracking-wider">Eventos do dia</span>
+                    </div>
+                    <h2 class="text-xl font-bold">${dataExtensa}</h2>
                 </div>
-            `}).join("");
+                <div class="p-6 max-h-[60vh] overflow-y-auto no-scrollbar">
+                    ${htmlEventos}
+                </div>
+            `;
+
+            // Mostra o Modal com animação
+            overlay.classList.remove('modal-exit');
+            overlay.classList.add('modal-enter');
+            content.classList.remove('modal-scale-exit');
+            content.classList.add('modal-scale-enter');
+        }
+
+        function fecharModal(e) {
+            if (e) e.preventDefault();
+            const overlay = document.getElementById('modal-overlay');
+            const content = document.getElementById('modal-content');
+            
+            overlay.classList.remove('modal-enter');
+            overlay.classList.add('modal-exit');
+            content.classList.remove('modal-scale-enter');
+            content.classList.add('modal-scale-exit');
+        }
+
+        // Função auxiliar para gerar um mini-card de evento pra lista debaixo do calendário
+        function gerarCardEventoMinimo(ev) {
+            const data = parseDataSegura(ev.dataPrevista);
+            const diaStr = data ? String(data.getDate()).padStart(2,'0') : '--';
+            const isConfirmado = ev.status.toLowerCase() === 'confirmado';
+            const statusCor = isConfirmado ? 'text-green-600' : 'text-amber-500';
+
+            return `
+            <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100 hover:border-gray-200 transition" onclick="abrirModalDia(${data.getFullYear()}, ${data.getMonth()}, ${data.getDate()})">
+                <div class="w-10 h-10 flex flex-col items-center justify-center bg-white rounded-lg shadow-sm border border-gray-100 flex-shrink-0">
+                    <span class="text-[10px] font-bold text-gray-400 uppercase leading-none">${nomesMeses[data.getMonth()].substring(0,3)}</span>
+                    <span class="text-sm font-bold text-brand-600 leading-tight">${diaStr}</span>
+                </div>
+                <div class="flex-grow min-w-0">
+                    <h4 class="font-bold text-gray-900 text-sm truncate">${ev.evento}</h4>
+                    <p class="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                        ${ev.programa} &bull; <span class="${statusCor} flex items-center"><i class="ph-fill ${isConfirmado ? 'ph-check-circle' : 'ph-clock'} mr-0.5"></i> ${ev.status}</span>
+                    </p>
+                </div>
+            </div>`;
         }
 
         function mudarAba(aba) {
             abaVisualAtual = aba;
-            const secPromo = document.getElementById("secao-promocoes");
-            const secDatas = document.getElementById("secao-datas");
+            document.getElementById("secao-promocoes").classList.toggle("hidden", aba === 'datas');
+            document.getElementById("secao-datas").classList.toggle("hidden", aba !== 'datas');
             
-            const btnAtivas = document.getElementById("tab-ativas");
-            const btnExpiradas = document.getElementById("tab-expiradas");
-            const btnDatas = document.getElementById("tab-datas");
+            ['ativas', 'expiradas', 'datas'].forEach(t => {
+                const btn = document.getElementById('tab-' + t);
+                if(t === aba) {
+                    btn.className = "flex-1 py-2 text-[13px] font-semibold rounded-lg bg-white text-gray-900 shadow-sm transition-all duration-200";
+                } else {
+                    btn.className = "flex-1 py-2 text-[13px] font-semibold rounded-lg text-gray-500 hover:text-gray-700 transition-all duration-200";
+                }
+            });
 
-            const activeClass = "flex-1 py-2 text-[13px] font-semibold rounded-lg bg-white text-gray-900 shadow-sm transition-all duration-200";
-            const inactiveClass = "flex-1 py-2 text-[13px] font-semibold rounded-lg text-gray-500 hover:text-gray-700 transition-all duration-200";
-
-            btnAtivas.className = inactiveClass;
-            btnExpiradas.className = inactiveClass;
-            btnDatas.className = inactiveClass;
-
-            if (aba === 'ativas' || aba === 'expiradas') {
-                secPromo.classList.remove("hidden");
-                secDatas.classList.add("hidden");
-                if(aba === 'ativas') btnAtivas.className = activeClass;
-                if(aba === 'expiradas') btnExpiradas.className = activeClass;
-                renderizarPromocoes(); 
-            } else {
-                secPromo.classList.add("hidden");
-                secDatas.classList.remove("hidden");
-                btnDatas.className = activeClass;
-            }
+            if (aba !== 'datas') renderizarPromocoes();
         }
 
         function filtrarPrograma(prog) {
             programaAtual = prog;
             document.querySelectorAll('.filtro-btn').forEach(btn => {
-                if (btn.innerText.toLowerCase() === prog.toLowerCase() || (prog === 'TODOS' && btn.innerText === 'Todos')) {
-                    btn.className = "filtro-btn px-4 py-1.5 text-sm font-medium rounded-full bg-gray-900 text-white whitespace-nowrap shadow-sm transition active:scale-95";
-                } else {
-                    btn.className = "filtro-btn px-4 py-1.5 text-sm font-medium rounded-full bg-white border border-gray-200 text-gray-600 whitespace-nowrap shadow-sm transition active:scale-95";
-                }
+                const isActive = btn.innerText.toLowerCase() === prog.toLowerCase() || (prog === 'TODOS' && btn.innerText === 'Todos');
+                btn.className = isActive 
+                    ? "filtro-btn px-4 py-1.5 text-sm font-medium rounded-full bg-gray-900 text-white shadow-sm transition active:scale-95"
+                    : "filtro-btn px-4 py-1.5 text-sm font-medium rounded-full bg-white border border-gray-200 text-gray-600 shadow-sm transition active:scale-95";
             });
             renderizarPromocoes();
         }
