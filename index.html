@@ -3,6 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- Suporte a PWA Manifest -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#ffffff">
+
+<!-- Suporte iOS (Safari) -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Radar Milhas">
+<link rel="apple-touch-icon" href="icon-192.png">
+
     <title>Radar de Milhas</title>
     
     <!-- Tailwind CSS -->
@@ -504,6 +514,21 @@
         }
 
         document.addEventListener('DOMContentLoaded', carregarDados);
+
+        document.addEventListener('DOMContentLoaded', () => {
+    carregarDados();
+
+    // Registro do Service Worker
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('Service Worker registrado:', reg.scope))
+            .catch(err => console.error('Erro no Service Worker:', err));
+    }
+});
+
+
+
+        
     </script>
 </body>
 </html>
